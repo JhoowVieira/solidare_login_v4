@@ -1,6 +1,7 @@
 import { prisma } from "../config/db.js"
 import bcrypt from "bcrypt"
 import {generateToken} from '../utils/generateToken.js'
+import { RoleUsuario } from "@prisma/client"
 
 const register = async (req, res) => {
     // Pega os dados enviados pelo cliente no corpo da requisição.
@@ -22,7 +23,7 @@ const register = async (req, res) => {
         // Neste caso, porque o e-mail já está cadastrado.
         .status(400)
         // Envia uma resposta em formato JSON informando o erro.
-        .json({ error: "Usuario ja exister com esse email"})
+        .json({ error: "Email já em uso"})
     }
     
 
@@ -62,6 +63,7 @@ const register = async (req, res) => {
                 id: usuario.id,
                 nome: nome,
                 email: email,
+                role: usuario.role,
                 // A senha NÃO é enviada na resposta por segurança.
             },
             token
