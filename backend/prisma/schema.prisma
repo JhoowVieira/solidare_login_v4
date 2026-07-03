@@ -11,6 +11,18 @@ enum RoleUsuario {
   OPERADOR
 }
 
+enum TipoInstituicao {
+  IGREJA
+  ASSOCIACAO
+  ONG
+  OUTRO
+}
+
+enum StatusInstituicao {
+  OK
+  PENDENTE
+}
+
 model Usuario {
   id            Int         @id @default(autoincrement())
   nome          String
@@ -23,4 +35,22 @@ model Usuario {
   atualizadoEm  DateTime    @updatedAt
   
   @@map("usuarios")
+}
+
+model InstituicaoParceira {
+  id               Int               @id @default(autoincrement())
+  nome             String
+  email            String            @unique
+  tipo             TipoInstituicao   @default(OUTRO)
+  responsavel      String
+  telefone         String
+  endereco         String
+  cidade           String
+  statusOk         StatusInstituicao @default(PENDENTE)
+  ativa            Boolean           @default(true)
+
+  criadoEm         DateTime          @default(now())
+  atualizadoEm     DateTime          @updatedAt
+
+  @@map("instituicoes_parceiras")
 }

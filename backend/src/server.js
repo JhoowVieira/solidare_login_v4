@@ -1,9 +1,12 @@
 import express from "express";
+import cors from "cors";
 import { config } from "dotenv";
 import { connectDB, disconnectDB } from "./config/db.js";
+import { authMiddleware } from "./middlewares/authMiddleware.js";
 
 // Importando Rotas
-import authRoutes from "./routes/authRoutes.js"
+import authRoutes from "./routes/authRoutes.js";
+import instituicoesRoutes from "./routes/instituicoesRoutes.js";
 
 // Carrega as variáveis de ambiente do arquivo .env
 config();
@@ -15,18 +18,20 @@ connectDB();
 const app = express();
 
 // Permite que a API receba dados no formato JSON
+app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true}))
+app.use(express.urlencoded({ extended: true }));
 
 // API Rotas
-app.use("/auth", authRoutes)
+app.use("/auth", authRoutes);
+app.use("/", instituicoesRoutes);
 
 // Porta onde o servidor ficará disponível
 const PORT = 3000;
 
 // Inicia o servidor e começa a escutar requisições
 const server = app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
 
 /* ==========================================================================
@@ -43,21 +48,18 @@ const server = app.listen(PORT, () => {
  * o servidor é encerrado de forma controlada.
  */
 process.on("unhandledRejection", (err) => {
+  console.error("Unhandled Rejection:", err);
 
-    console.error("Unhandled Rejection:", err);
+  // Para de aceitar novas requisições.
+  // Aguarda as requisições atuais terminarem.
+  server.close(async () => {
+    // Fecha a conexão com o banco de dados.
+    await disconnectDB();
 
-    // Para de aceitar novas requisições.
-    // Aguarda as requisições atuais terminarem.
-    server.close(async () => {
-
-        // Fecha a conexão com o banco de dados.
-        await disconnectDB();
-
-        // Encerra o processo indicando erro.
-        process.exit(1);
-    });
+    // Encerra o processo indicando erro.
+    process.exit(1);
+  });
 });
-
 
 /**
  * Captura erros síncronos que não foram tratados.
@@ -69,16 +71,14 @@ process.on("unhandledRejection", (err) => {
  * a aplicação continuará funcionando corretamente.
  */
 process.on("uncaughtException", async (err) => {
+  console.error("Uncaught Exception:", err);
 
-    console.error("Uncaught Exception:", err);
+  // Fecha a conexão com o banco antes de finalizar.
+  await disconnectDB();
 
-    // Fecha a conexão com o banco antes de finalizar.
-    await disconnectDB();
-
-    // Encerra imediatamente o processo.
-    process.exit(1);
+  // Encerra imediatamente o processo.
+  process.exit(1);
 });
-
 
 /**
  * Captura o sinal SIGTERM enviado pelo sistema operacional.
@@ -92,16 +92,14 @@ process.on("uncaughtException", async (err) => {
  * É apenas um pedido para finalizar a aplicação.
  */
 process.on("SIGTERM", async () => {
+  console.log("SIGTERM recebido. Encerrando aplicação...");
 
-    console.log("SIGTERM recebido. Encerrando aplicação...");
+  // Para de aceitar novas conexões.
+  server.close(async () => {
+    // Fecha a conexão com o banco.
+    await disconnectDB();
 
-    // Para de aceitar novas conexões.
-    server.close(async () => {
-
-        // Fecha a conexão com o banco.
-        await disconnectDB();
-
-        // Finaliza normalmente (sem erro).
-        process.exit(0);
-    });
+    // Finaliza normalmente (sem erro).
+    process.exit(0);
+  });
 });

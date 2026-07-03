@@ -1,7 +1,6 @@
 import { prisma } from "../config/db.js"
 import bcrypt from "bcrypt"
 import {generateToken} from '../utils/generateToken.js'
-import { RoleUsuario } from "@prisma/client"
 
 const register = async (req, res) => {
     // Pega os dados enviados pelo cliente no corpo da requisição.
