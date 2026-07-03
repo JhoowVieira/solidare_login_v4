@@ -9,6 +9,7 @@ datasource db {
 enum RoleUsuario {
   ADMIN
   OPERADOR
+  INSTITUICAO
 }
 
 enum TipoInstituicao {
@@ -33,6 +34,9 @@ model Usuario {
   ativo         Boolean     @default(true)
   criadoEm      DateTime    @default(now())
   atualizadoEm  DateTime    @updatedAt
+
+  instituicaoId Int?                @unique
+  instituicao   InstituicaoParceira? @relation(fields: [instituicaoId], references: [id])
   
   @@map("usuarios")
 }
@@ -51,6 +55,8 @@ model InstituicaoParceira {
 
   criadoEm         DateTime          @default(now())
   atualizadoEm     DateTime          @updatedAt
+
+  usuario          Usuario?
 
   @@map("instituicoes_parceiras")
 }

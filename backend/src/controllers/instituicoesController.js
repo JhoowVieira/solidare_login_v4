@@ -1,9 +1,7 @@
 import { prisma } from "../config/db.js"
 import bcrypt from "bcrypt"
 import {generateToken} from '../utils/generateToken.js'
-
-console.log(Object.keys(prisma));
-console.log(prisma.instituicaoParceira);
+import {createPassword} from '../utils/generatePassword.js'
 
 const register = async (req, res) => {
     const {nome, email, tipo, responsavel, telefone, endereco, cidade} = req.body
@@ -18,27 +16,37 @@ const register = async (req, res) => {
         })
     }
 
-    const instituicao = await prisma.instituicaoParceira.create({
+    const senhagerada = createPassword()
+
+    const senhaHash = await bcrypt.hash(senhagerada, 10)
+
+    const novoUsuario = await prisma.usuario.create({
         data: {
-            nome,
+            nome: responsavel,
             email,
-            tipo,
-            responsavel,
-            telefone,
-            endereco,
-            cidade,
+            senhaHash,
+            role: 'INSTITUICAO',
+            instituicao: {
+                create: {
+                    nome,
+                    email,
+                    tipo,
+                    responsavel,
+                    telefone,
+                    endereco,
+                    cidade,
+                }
+            }
+        },
+        include: {
+            instituicao: true
         }
     })
 
     res.status(201).json({
-        status: "sucesso",
-        data: {
-            instituicao: {
-                id: instituicao.id,
-                nome: instituicao.nome,
-                email: instituicao.email
-            }
-        }
+        mensagem: "Instituição cadastrada com sucesso!",
+        email: novoUsuario.email,
+        senhaProvisoria: senhagerada
     })
 }
 
