@@ -1,7 +1,7 @@
 import express from "express";
 import { config } from "dotenv";
 import { connectDB, disconnectDB } from "./config/db.js";
-import { authMiddleware } from "./middlewares/authMiddleware.js";
+import { protect } from "./middlewares/authMiddleware.js";
 
 // Importando Rotas
 import authRoutes from "./routes/authRoutes.js";

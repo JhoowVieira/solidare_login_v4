@@ -16,9 +16,9 @@ const register = async (req, res) => {
         })
     }
 
-    const senhagerada = createPassword()
+    const senhaGerada = createPassword()
 
-    const senhaHash = await bcrypt.hash(senhagerada, 10)
+    const senhaHash = await bcrypt.hash(senhaGerada, 10)
 
     const novoUsuario = await prisma.usuario.create({
         data: {
@@ -46,8 +46,39 @@ const register = async (req, res) => {
     res.status(201).json({
         mensagem: "Instituição cadastrada com sucesso!",
         email: novoUsuario.email,
-        senhaProvisoria: senhagerada
+        senhaProvisoria: senhaGerada
     })
 }
 
-export {register}
+const instituicoesAll = async (req, res) => {
+    try {
+        const instituicoes = await prisma.instituicaoParceira.findMany()
+        return res.status(200).json(instituicoes)
+    } catch (error) {
+        return res.status(500).json({ error: 'Erro ao listar as instituições'})
+    }
+}
+
+const instituicaoListar = async (req, res) => {
+    const id = Number(req.params.id)
+
+    if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({
+            error: 'ID inválido. Use um inteiro positivo'
+        })
+    }
+
+    try {
+        const instituicao = await prisma.instituicaoParceira.findUnique({ where: {id}})
+
+        if (!instituicao) {
+            return res.status(404).json({ error: 'Instituição não encontrada'})
+        }
+
+        return res.status(200).json(instituicao)
+    } catch (error) {
+        return res.status(500).json({ error: 'Erro ao buscar instituição'})
+    }
+}
+
+export {register, instituicoesAll, instituicaoListar}

@@ -8,7 +8,6 @@ datasource db {
 
 enum RoleUsuario {
   ADMIN
-  OPERADOR
   INSTITUICAO
 }
 
@@ -29,7 +28,7 @@ model Usuario {
   nome          String
   email         String      @unique
   senhaHash     String
-  role          RoleUsuario @default(OPERADOR)
+  role          RoleUsuario @default(INSTITUICAO)
 
   ativo         Boolean     @default(true)
   criadoEm      DateTime    @default(now())

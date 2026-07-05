@@ -1,6 +1,7 @@
 import { prisma } from '../config/db.js'
 import bcrypt from 'bcrypt'
 import jwt from "jsonwebtoken";
+import { error } from 'node:console';
 import { Result } from 'pg';
 
 
@@ -10,7 +11,7 @@ import { Result } from 'pg';
 // - permitir o acesso; 
 // - bloquear o acesso; 
 // - adicionar informações à requisição.
-const authMiddleware = async (req, res, next) => {
+const protect = async (req, res, next) => {
     try {
         // Obtém o cabeçalho Authorization enviado pelo cliente.
         // Exemplo: 
@@ -19,7 +20,7 @@ const authMiddleware = async (req, res, next) => {
 
         // Verifica se o cabeçalho foi enviado.
         if (!authHeader) {
-            return res.status(401).json({ error: "Você precisa fazer login para acessar este recurso." });
+            return res.status(401).json({ error: "Você precisa estar logado para acessar este recurso." });
         }
 
         // Separa o texto pelo espaço.
@@ -44,10 +45,7 @@ const authMiddleware = async (req, res, next) => {
         // retorna os dados armazenados no Token.
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        // Salva o ID do usuário na requisição.
-        // Agora qualquer rota poderá acessar: 
-        // req.userId
-        req.userId = decoded.id;
+        
 
         // Procura o usuário no banco usando o ID 
         // armazenado no Token.
@@ -62,6 +60,7 @@ const authMiddleware = async (req, res, next) => {
                 nome: true,
                 email: true,
                 role: true,
+                ativo: true
             },
         });
 
@@ -70,12 +69,24 @@ const authMiddleware = async (req, res, next) => {
             return res.status(401).json({ error: "Usuário não encontrado" });
         }
 
+        // Verifa se está ativo
+        if (!usuario.ativo) {
+            return res.status(401).json({
+                error: "Usuário desativado"
+            })
+        }
+
         // Salva os dados do usuário dentro da requisição.
         // Assim outras rotas poderão acessar: 
         // req.usuario.nome 
         // req.usuario.email 
         // req.usuario.role
         req.user = usuario;
+
+        // Salva o ID do usuário na requisição.
+        // Agora qualquer rota poderá acessar: 
+        // req.userId
+        req.userId = decoded.id;
 
         // Continua para a próxima função 
         // (normalmente a rota).
@@ -103,7 +114,7 @@ const authMiddleware = async (req, res, next) => {
 // Middleware responsável por verificar se o usuário 
 // possui a permissão (role) necessária para acessar uma rota. 
 // role = cargo ou nível de acesso do usuário.
-const verifyRole = (role) => {
+const authorize = (role) => {
     // Retorna um middleware que será executado 
     // antes da rota protegida.
     return (req, res, next) => {
@@ -111,14 +122,18 @@ const verifyRole = (role) => {
         // Obtém o cargo do usuário autenticado.
         // Esse dado foi adicionado pelo authMiddleware: 
         // req.usuario = usuario;
-        const userRole = req.user?.role;
+        if (!req.user) {
+            return res.status(401).json({
+                error: "Usuário não autenticado"
+            })
+        }
 
         // Verifica se o usuário possui a permissão exigida.
-        if (req.user.role !==role) {
+        if (req.user.role !== role) {
             // Código HTTP 403 = Forbidden (Acesso proibido). 
             // O usuário está autenticado, 
             // mas não tem permissão para acessar esta rota.
-            return res.status(403).json({mensagem: "Acesso negado"})
+            return res.status(403).json({error: "Você não possui permissão para acessar este recurso."})
         }
 
         // Permissão concedida. 
@@ -128,4 +143,4 @@ const verifyRole = (role) => {
 }
 
 
-export {authMiddleware, verifyRole}
+export {protect, authorize}
