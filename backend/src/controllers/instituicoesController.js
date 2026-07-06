@@ -10,6 +10,9 @@ import { error } from "node:console"
 import { Prisma } from "@prisma/client"
 
 const cadastrarInstituicao = async (req, res) => {
+
+    console.log("Entrou em listarInstituicoes");
+    
     try {
         const data = criarInstituicaoSchema.parse(req.body) 
 

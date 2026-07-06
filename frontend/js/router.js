@@ -10,6 +10,25 @@ async function carregarPagina(pagina) {
 
         conteudo.innerHTML = html;
 
+        // Executa o JavaScript da página carregada
+        if (pagina === "instituicoes.html") {
+
+            import("../js/instituicoes.js");
+
+        }
+
+        if (pagina === "beneficiarios.html") {
+
+            import("../js/beneficiarios.js");
+
+        }
+
+        if (pagina === "dashboard.html") {
+
+            import("../js/dashboard.js");
+
+        }
+
     } catch (erro) {
 
         conteudo.innerHTML = `
