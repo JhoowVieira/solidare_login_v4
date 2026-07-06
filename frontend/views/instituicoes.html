@@ -1,10 +1,16 @@
 <h1>Instituições</h1>
 
-<button id="btnAtualizar">
-    Atualizar Lista
-</button>
+<div style="margin-bottom:20px;">
 
-<br><br>
+    <button id="btnNovaInstituicao">
+        + Nova Instituição
+    </button>
+
+    <button id="btnAtualizar">
+        Atualizar Lista
+    </button>
+
+</div>
 
 <table border="1" width="100%" cellspacing="0" cellpadding="10">
 
@@ -17,6 +23,7 @@
             <th>Email</th>
             <th>Cidade</th>
             <th>Status</th>
+            <th>Ações</th>
         </tr>
 
     </thead>
@@ -26,5 +33,108 @@
     </tbody>
 
 </table>
+
+<!-- MODAL -->
+
+<div id="modalInstituicao"
+     style="
+        display:none;
+        position:fixed;
+        top:0;
+        left:0;
+        width:100%;
+        height:100%;
+        background:rgba(0,0,0,.4);
+     ">
+
+    <div style="
+        width:600px;
+        margin:60px auto;
+        background:white;
+        padding:30px;
+        border-radius:10px;
+    ">
+
+        <h2>Nova Instituição</h2>
+
+        <!-- FORMULÁRIO -->
+
+        <form id="formInstituicao">
+
+            <label>Nome</label><br>
+            <input
+                type="text"
+                id="nome"
+                required
+            ><br><br>
+
+            <label>Responsável</label><br>
+            <input
+                type="text"
+                id="responsavel"
+                required
+            ><br><br>
+
+            <label>Email</label><br>
+            <input
+                type="email"
+                id="email"
+                required
+            ><br><br>
+
+            <label>Telefone</label><br>
+            <input
+                type="text"
+                id="telefone"
+                required
+            ><br><br>
+
+            <label>Tipo</label><br>
+
+            <select
+                id="tipo"
+                required>
+
+                <option value="">Selecione</option>
+                <option value="ONG">ONG</option>
+                <option value="IGREJA">IGREJA</option>
+                <option value="ASSOCIACAO">ASSOCIAÇÃO</option>
+                <option value="OUTRO">OUTRO</option>
+
+            </select>
+
+            <br><br>
+
+            <label>Endereço</label><br>
+            <input
+                type="text"
+                id="endereco"
+                required
+            ><br><br>
+
+            <label>Cidade</label><br>
+            <input
+                type="text"
+                id="cidade"
+                required
+            ><br><br>
+
+            <button type="submit">
+                Salvar
+            </button>
+
+            <button
+                type="button"
+                id="btnFecharModal">
+
+                Cancelar
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
 
 <script src="../js/instituicoes.js"></script>
