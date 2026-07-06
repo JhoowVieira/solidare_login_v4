@@ -5,7 +5,7 @@ import { prisma } from "../config/db.js"
 
 // Importa o tipo de erro do Zod. 
 // O Zod é uma biblioteca que verifica se os dados enviados pelo usuário estão corretos antes de salvar no banco.
-import { ZodError } from "zod"
+import { date, ZodError } from "zod"
 
 // Importa o esquema (schema) de validação. 
 // Esse arquivo contém todas as regras que um beneficiário deve seguir. 
@@ -77,7 +77,8 @@ const cadastrarBeneficiario = async (req, res) => {
                 // Acrescenta mais um campo ao objeto. 
                 // instituicaoId não veio do usuário.
                 // Ele foi colocado em req.user por um middleware de autenticação anteriormente. Dessa forma o beneficiário ficará associado à instituição do usuário logado.
-                instituicaoId: req.user.instituicaoId
+                instituicaoId: req.user.instituicaoId,
+                deletedAt: null
             }
         })
 
@@ -115,7 +116,8 @@ const listarBeneficiarios = async (req, res) => {
             // Filtro da consulta.
             // Retorna apenas os registros cujo instituicaoId seja igual ao da instituição do usuário.
             where: {
-            instituicaoId: req.user.instituicaoId
+            instituicaoId: req.user.instituicaoId,
+            deletedAt: null
         },
     })
         // Retorna a lista de beneficiários.
@@ -129,28 +131,97 @@ const listarBeneficiarios = async (req, res) => {
     }
 }
 
+// Função responsável por buscar os detalhes de um beneficiário.
+// "async" significa que ela pode esperar operações demoradas,
+// como consultar o banco de dados.
 const detalheDoBeneficiario = async (req, res) => {
+
+    // Pega o ID enviado na URL.
+    // Exemplo:
+    // GET /beneficiarios/5
+    // req.params.id será "5" (texto).
+    //
+    // Number() converte esse texto para um número.
+    // Assim, "5" passa a ser 5.
     const id = Number(req.params.id)
 
+    // Antes de consultar o banco, verificamos se o ID é válido.
+    // Number.isInteger(id)
+    // Verifica se o valor é um número inteiro.
+    // O "!" significa "NÃO".
+    // Então:
+    // !Number.isInteger(id)
+    // quer dizer:
+    // "Se NÃO for um número inteiro..."
+    // O operador || significa "OU".
+    // Portanto, esta condição significa:
+    // "Se o ID não for inteiro OU for menor ou igual a zero..."
     if (!Number.isInteger(id) || id <= 0) {
+
+        // Retorna o status HTTP 400.
+        // Esse código significa:
+        // "O cliente enviou uma informação inválida."
+        // Em seguida, envia um JSON com a mensagem de erro.
         return res.status(400).json({
-            error: 'ID inválido. Use um inteiro positivo'
+            error: 'ID inválido.'
         })
     }
 
+    // O bloco try tenta executar o código abaixo.
+    // Se ocorrer algum erro inesperado (como perda de conexão
+    // com o banco de dados), a execução será enviada para o catch.
     try {
-        const beneficiario = await prisma.beneficiario.findFirst({
-            where: {
-                id,
-                instituicaoId: req.user.instituicaoId}
-        })
 
+        // Faz uma busca no banco de dados usando o Prisma.
+
+        // "await" significa:
+        // "Espere o banco responder antes de continuar."
+
+        // prisma.beneficiario
+        // representa a tabela (ou modelo) Beneficiario.
+
+        // findFirst()
+        // procura o primeiro registro que atender às condições.
+        const beneficiario = await prisma.beneficiario.findFirst({
+            // where significa:
+            // "Procure apenas registros que satisfaçam estas condições."
+            where: {
+                // Primeira condição:
+                // o ID precisa ser exatamente igual ao informado na URL.
+                id,
+
+                // Segunda condição:
+                // o beneficiário precisa pertencer à mesma instituição do usuário que está autenticado.
+                //
+                // req.user contém informações do usuário logado, normalmente adicionadas por um middleware de autenticação.
+                //
+                // Isso impede que um usuário veja dados de outra instituição.
+                instituicaoId: req.user.instituicaoId,
+                deletedAt: null
+            }
+        })
+        // Se nenhum beneficiário atender às condições acima,
+        // o Prisma retorna null.
+        //
+        // O "!" verifica justamente isso:
+        // "Se NÃO existe beneficiário..."
         if (!beneficiario) {
+
+            // Retorna o status HTTP 404.
+            // Esse código significa:
+            // "O recurso solicitado não foi encontrado."
             return res.status(404).json({
                 error: 'Beneficiário não encontrado'
             })
         }
 
+        // Se chegou até aqui, significa que:
+        // ✔ o ID era válido;
+        // ✔ o beneficiário existe;
+        // ✔ ele pertence à instituição do usuário.
+        //
+        // Então retornamos o status 200 (sucesso)
+        // juntamente com todos os dados encontrados.
         return res.status(200).json(beneficiario)
     } catch (error) {
         return res.status(500).json({
@@ -176,7 +247,8 @@ const atualizarDadosBeneficiario = async (req, res) => {
         const beneficiario = await prisma.beneficiario.findFirst({
         where: {
             id,
-            instituicaoId: req.user.instituicaoId
+            instituicaoId: req.user.instituicaoId,
+            deletedAt: null
         }
         })
 
@@ -227,7 +299,8 @@ const atualizarStatus = async (req, res) => {
         const beneficiario = await prisma.beneficiario.findFirst({
         where: {
             id,
-            instituicaoId: req.user.instituicaoId
+            instituicaoId: req.user.instituicaoId,
+            deletedAt: null
         }
         })
 
@@ -274,7 +347,8 @@ const removeBeneficiario = async (req, res) => {
         const beneficiario = await prisma.beneficiario.findFirst({
         where: {
             id,
-            instituicaoId: req.user.instituicaoId
+            instituicaoId: req.user.instituicaoId,
+            deletedAt: null
         }
         })
 
@@ -284,8 +358,12 @@ const removeBeneficiario = async (req, res) => {
             })
         }
 
-        await prisma.beneficiario.delete({
-            where: { id }
+        await prisma.beneficiario.update({
+            where: { id 
+            }, 
+            data: {
+                deletedAt: new Date()
+            }
         })
         return res.status(204).json({
             mensagem: "Beneficiário deletado com sucesso!"
@@ -295,7 +373,7 @@ const removeBeneficiario = async (req, res) => {
                     return res.status(404).json({ error: 'Beneficiário não encontrado.'})
                 }
         
-                console.error(`PUT /instituicao/${req.params.id} error:`, error)
+                console.error(`DELETE /instituicao/${req.params.id} error:`, error)
                 return res.status(500).json({
                     error: 'Erro interno ao deletar beneficiário.'
                 })
