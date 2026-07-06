@@ -60,7 +60,8 @@ const protect = async (req, res, next) => {
                 nome: true,
                 email: true,
                 role: true,
-                ativo: true
+                ativo: true,
+                instituicaoId: true,
             },
         });
 

@@ -6,6 +6,7 @@ import { protect } from "./middlewares/authMiddleware.js";
 // Importando Rotas
 import authRoutes from "./routes/authRoutes.js";
 import instituicoesRoutes from "./routes/instituicoesRoutes.js";
+import beneficariosRoutes from "./routes/beneficariosRoutes.js";
 
 // Carrega as variáveis de ambiente do arquivo .env
 config();
@@ -23,6 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 // API Rotas
 app.use("/auth", authRoutes);
 app.use("/", instituicoesRoutes);
+app.use("/", beneficariosRoutes);
 
 // Porta onde o servidor ficará disponível
 const PORT = 3000;
