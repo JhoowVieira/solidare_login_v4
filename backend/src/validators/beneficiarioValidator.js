@@ -75,5 +75,8 @@ export const criarBeneficiarioSchema = z.object({
   observacoes: z
     .string()
     .max(1000)
-    .optional()
+    .optional(),
+
+  ativo: z
+    .boolean()
 });

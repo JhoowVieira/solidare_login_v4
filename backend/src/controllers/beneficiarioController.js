@@ -14,6 +14,8 @@ import { ZodError } from "zod"
 // - CPF é obrigatório. 
 // - CPF precisa estar no formato correto.
 import {criarBeneficiarioSchema} from "../validators/beneficiarioValidator.js"
+import { be } from "zod/v4/locales"
+import { error } from "node:console"
 
 // Cria a função responsável por cadastrar um beneficiário.
 // "async" significa que essa função fará operações demoradas, como consultar ou salvar dados no banco.
@@ -102,4 +104,202 @@ const cadastrarBeneficiario = async (req, res) => {
     }
 }
 
-export {cadastrarBeneficiario}
+
+// Função responsável por listar os beneficiários da instituição do usuário autenticado.
+const listarBeneficiarios = async (req, res) => {
+    try {
+
+        // Busca todos os beneficiários no banco que pertencem à mesma instituição do usuário logado.
+        const beneficiario = await prisma.beneficiario.findMany({
+
+            // Filtro da consulta.
+            // Retorna apenas os registros cujo instituicaoId seja igual ao da instituição do usuário.
+            where: {
+            instituicaoId: req.user.instituicaoId
+        },
+    })
+        // Retorna a lista de beneficiários.
+        return res.status(200).json(beneficiario)
+    } catch (error) {
+
+        // Caso ocorra algum erro durante a consulta, retorna um erro interno do servidor.
+        return res.status(500).json({
+            error: 'Erro ao listar os beneficiários.'
+        })
+    }
+}
+
+const detalheDoBeneficiario = async (req, res) => {
+    const id = Number(req.params.id)
+
+    if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({
+            error: 'ID inválido. Use um inteiro positivo'
+        })
+    }
+
+    try {
+        const beneficiario = await prisma.beneficiario.findFirst({
+            where: {
+                id,
+                instituicaoId: req.user.instituicaoId}
+        })
+
+        if (!beneficiario) {
+            return res.status(404).json({
+                error: 'Beneficiário não encontrado'
+            })
+        }
+
+        return res.status(200).json(beneficiario)
+    } catch (error) {
+        return res.status(500).json({
+            error: 'Erro ao buscar beneficiário.'
+        })
+    }
+}
+
+const atualizarBeneficiarioSchema = criarBeneficiarioSchema.partial()
+
+const atualizarDadosBeneficiario = async (req, res) => {
+    const id = Number(req.params.id)
+
+    if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({
+            error: 'ID inválido'
+        })
+    }
+    
+    
+
+    try {
+        const beneficiario = await prisma.beneficiario.findFirst({
+        where: {
+            id,
+            instituicaoId: req.user.instituicaoId
+        }
+        })
+
+        if (!beneficiario) {
+            return res.status(404).json({
+                error: "Beneficiário não encontrado."
+            })
+        }
+
+        const data = atualizarBeneficiarioSchema.parse(req.body)
+        const update = await prisma.beneficiario.update({
+            where: {
+                id
+            },
+            data
+        }
+        )
+        return res.status(200).json(update)
+        } catch (error) {
+        if (error instanceof ZodError) {
+            return res.status(400).json({
+                error: "Payload inválido",
+                issues: error.issues.map((e) => ({
+                    path: e.path.join('.'),
+                     message: e.message,
+                }))
+            })
+        }
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+            return res.status(404).json({ error: 'Beneficiário não encontrado.'})
+        }
+        
+        console.error(`PUT /beneficiarios/${req.params.id} error:`, error)
+        return res.status(500).json({
+            error: 'Erro interno ao atualizar beneficiário.'
+        })
+    }
+}
+
+const atualizarStatus = async (req, res) => {
+    const id = Number(req.params.id)
+    if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ erro: 'ID inválido.' })
+    }
+
+    try {
+
+        const beneficiario = await prisma.beneficiario.findFirst({
+        where: {
+            id,
+            instituicaoId: req.user.instituicaoId
+        }
+        })
+
+        if (!beneficiario) {
+            return res.status(404).json({
+                error: "Beneficiário não encontrado."
+            })
+        }
+
+        const data = atualizarBeneficiarioSchema.parse(req.body)
+        const { ativo } = data
+
+        const valoresValidos = [true, false]
+        if (!valoresValidos.includes(ativo)) {
+            return res.status(400).json({
+                error: 'Status deve ser true ou false'
+            })
+        }
+
+        const beneficiarioAtualizado = await prisma.beneficiario.update({
+            where: { id },
+            data: { ativo }
+        })
+
+        res.json(beneficiarioAtualizado)
+
+    } catch (error) {
+        if (error.name === 'ZodError') {
+            return res.status(400).json({ erro: 'Dados inválidos', detalhes: error.errors })
+        }
+        console.error(error) // ajuda a ver o erro real no terminal
+        res.status(500).json({ erro: 'Erro interno do servidor' })
+    }
+
+}
+
+const removeBeneficiario = async (req, res) => {
+    const id = Number(req.params.id) 
+    if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ error: 'ID inválido. Use um inteiro positivo'})
+    }
+
+    try {
+        const beneficiario = await prisma.beneficiario.findFirst({
+        where: {
+            id,
+            instituicaoId: req.user.instituicaoId
+        }
+        })
+
+        if (!beneficiario) {
+            return res.status(404).json({
+                error: "Beneficiário não encontrado."
+            })
+        }
+
+        await prisma.beneficiario.delete({
+            where: { id }
+        })
+        return res.status(204).json({
+            mensagem: "Beneficiário deletado com sucesso!"
+        })
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+                    return res.status(404).json({ error: 'Beneficiário não encontrado.'})
+                }
+        
+                console.error(`PUT /instituicao/${req.params.id} error:`, error)
+                return res.status(500).json({
+                    error: 'Erro interno ao deletar beneficiário.'
+                })
+    }
+}
+
+export {cadastrarBeneficiario, listarBeneficiarios, detalheDoBeneficiario, atualizarDadosBeneficiario, atualizarStatus, removeBeneficiario}
