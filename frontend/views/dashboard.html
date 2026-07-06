@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instituto Solidare - Dashboard</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+            font-family:Arial, Helvetica, sans-serif;
+            background:#f5f5f5;
+        }
+
+        .container{
+            display:flex;
+            min-height:100vh;
+        }
+
+        /* MENU */
+
+        aside{
+            width:260px;
+            background:#850013;
+            color:white;
+            display:flex;
+            flex-direction:column;
+        }
+
+        .logo{
+            padding:30px;
+            text-align:center;
+            border-bottom:1px solid rgba(255,255,255,.2);
+        }
+
+        .logo h2{
+            margin-top:10px;
+        }
+
+        nav{
+            margin-top:30px;
+        }
+
+        nav a{
+            display:block;
+            color:white;
+            text-decoration:none;
+            padding:16px 25px;
+            transition:.3s;
+        }
+
+        nav a:hover{
+            background:#a3001d;
+        }
+
+        nav i{
+            width:25px;
+        }
+
+        /* CONTEÚDO */
+
+        .content{
+            flex:1;
+            display:flex;
+            flex-direction:column;
+        }
+
+        header{
+            height:70px;
+            background:white;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:0 30px;
+            box-shadow:0 2px 10px rgba(0,0,0,.08);
+        }
+
+        .usuario{
+            display:flex;
+            align-items:center;
+            gap:15px;
+        }
+
+        #nomeUsuario{
+            font-weight:bold;
+        }
+
+        #logout{
+            background:#850013;
+            color:white;
+            border:none;
+            padding:10px 18px;
+            border-radius:6px;
+            cursor:pointer;
+        }
+
+        #logout:hover{
+            background:#a3001d;
+        }
+
+        main{
+            padding:30px;
+        }
+
+        h1{
+            margin-bottom:25px;
+        }
+
+        .cards{
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+            gap:20px;
+        }
+
+        .card{
+            background:white;
+            border-radius:10px;
+            padding:25px;
+            box-shadow:0 3px 12px rgba(0,0,0,.08);
+        }
+
+        .card h3{
+            color:#555;
+            margin-bottom:10px;
+        }
+
+        .numero{
+            font-size:34px;
+            color:#850013;
+            font-weight:bold;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <aside>
+
+        <div class="logo">
+
+            <i class="fa-solid fa-heart fa-3x"></i>
+
+            <h2>Solidare</h2>
+
+        </div>
+
+        <nav>
+
+            <a href="#" onclick="carregarPagina('home.html')">
+                <i class="fa-solid fa-chart-line"></i>
+                Dashboard
+            </a>
+
+            <a href="#" onclick="carregarPagina('beneficiarios.html')">
+                <i class="fa-solid fa-users"></i>
+                Beneficiários
+            </a>
+
+            <a href="#" onclick="carregarPagina('instituicoes.html')">
+                <i class="fa-solid fa-building"></i>
+                Instituições
+            </a>
+
+            <a href="#" onclick="carregarPagina('rfid.html')">
+                <i class="fa-solid fa-id-card"></i>
+                RFID
+            </a>
+
+            <a href="#" onclick="carregarPagina('doacoes.html')">
+                <i class="fa-solid fa-hand-holding-heart"></i>
+                Doações
+            </a>
+
+            <a href="#" onclick="carregarPagina('relatorios.html')">
+                <i class="fa-solid fa-file-lines"></i>
+                Relatórios
+            </a>
+
+        </nav>
+
+    </aside>
+
+    <div class="content">
+
+        <header>
+
+            <h2>Painel Administrativo</h2>
+
+            <div class="usuario">
+
+                <span id="nomeUsuario">Carregando...</span>
+
+                <button id="logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    Sair
+                </button>
+
+            </div>
+
+        </header>
+
+        <main id="conteudo">
+
+            <h1>Dashboard</h1>
+
+            <div class="cards">
+
+                <div class="card">
+                    <h3>Beneficiários</h3>
+                    <div class="numero">0</div>
+                </div>
+
+                <div class="card">
+                    <h3>Instituições</h3>
+                    <div class="numero">0</div>
+                </div>
+
+                <div class="card">
+                    <h3>Doações</h3>
+                    <div class="numero">0</div>
+                </div>
+
+                <div class="card">
+                    <h3>RFIDs Ativos</h3>
+                    <div class="numero">0</div>
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+</div>
+
+<script src="../js/router.js"></script>
+<script src="../js/dashboard.js"></script>
+
+</body>
+</html>
