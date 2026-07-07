@@ -3,7 +3,7 @@ import bcrypt from "bcrypt"
 import {generateToken} from '../utils/generateToken.js'
 import {createPassword} from '../utils/generatePassword.js'
 import {criarInstituicaoSchema} from '../validators/instituicaoValidator.js'
-import { number, ZodError } from "zod"
+import { ZodError } from "zod"
 import path from "node:path"
 import { da } from "zod/v4/locales"
 import { error } from "node:console"
@@ -112,7 +112,7 @@ const atualizarInstituicaoSchema = criarInstituicaoSchema.partial()
 
 const atualizarDadosInstituicao = async (req, res) => {
     const id = Number(req.params.id)
-    if (!number.isInteger(id) || id <= 0) {
+    if (!Number.isInteger(id) || id <= 0) {
         return res.status(400).json({
             error: 'ID inválido. Use um inteiro positivo'
         })
