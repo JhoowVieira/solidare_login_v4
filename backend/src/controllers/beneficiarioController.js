@@ -1,6 +1,6 @@
 // Importa a instância do Prisma. 
 // O Prisma é a ferramenta responsável por conversar com o banco de dados. 
-// // Sempre que precisarmos buscar, criar, editar ou excluir informações, usaremos o prisma.
+// Sempre que precisarmos buscar, criar, editar ou excluir informações, usaremos o prisma.
 import { prisma } from "../config/db.js"
 
 // Importa o tipo de erro do Zod. 
@@ -61,6 +61,12 @@ const cadastrarBeneficiario = async (req, res) => {
             })
         }
 
+        if (!req.user.instituicaoId) {
+            return res.status(403).json({
+                error: "Usuário não está vinculado a nenhuma instituição parceira."
+            })
+        }
+
         // Caso nenhum beneficiário tenha sido encontrado, podemos criar um novo registro no banco.
         const novoBeneficiario = await prisma.beneficiario.create({
 
@@ -106,29 +112,60 @@ const cadastrarBeneficiario = async (req, res) => {
 
 
 // Função responsável por listar os beneficiários da instituição do usuário autenticado.
+// Função responsável por listar os beneficiários da instituição do usuário autenticado.
 const listarBeneficiarios = async (req, res) => {
     try {
+        // Monta o filtro dinamicamente, dependendo de quem está logado
+        const where = { deletedAt: null };
 
-        // Busca todos os beneficiários no banco que pertencem à mesma instituição do usuário logado.
-        const beneficiario = await prisma.beneficiario.findMany({
+        if (req.user.role === 'INSTITUICAO') {
+            // Instituição NUNCA escolhe o filtro — é travado no próprio id dela, vindo do token
+            where.instituicaoId = req.user.instituicaoId;
 
-            // Filtro da consulta.
-            // Retorna apenas os registros cujo instituicaoId seja igual ao da instituição do usuário.
-            where: {
-            instituicaoId: req.user.instituicaoId,
-            deletedAt: null
-        },
-    })
-        // Retorna a lista de beneficiários.
-        return res.status(200).json(beneficiario)
+        } else if (req.user.role === 'ADMIN') {
+            // Admin pode opcionalmente filtrar por uma instituição específica via query string
+            // Ex: GET /beneficiarios?instituicaoId=5
+            if (req.query.instituicaoId !== undefined) {
+                const instituicaoId = Number(req.query.instituicaoId);
+
+                if (!Number.isInteger(instituicaoId) || instituicaoId <= 0) {
+                    return res.status(400).json({
+                        error: 'O parâmetro instituicaoId deve ser um número inteiro válido.'
+                    });
+                }
+
+                where.instituicaoId = instituicaoId;
+            }
+            // se não passar nada, "where" fica só com deletedAt: null → traz de todas as instituições
+
+        } else {
+            // Papel desconhecido/não previsto: nunca deixa passar sem filtro (default-deny)
+            return res.status(403).json({ error: 'Acesso não autorizado.' });
+        }
+
+        const beneficiarios = await prisma.beneficiario.findMany({
+            where,
+            include: {
+                instituicao: {
+                    select: {
+                        id: true,
+                        nome: true
+                    }
+                }
+            },
+            orderBy: {
+                nomeCompleto: 'asc'
+            }
+        });
+
+        return res.status(200).json(beneficiarios);
+
     } catch (error) {
-
-        // Caso ocorra algum erro durante a consulta, retorna um erro interno do servidor.
         return res.status(500).json({
             error: 'Erro ao listar os beneficiários.'
-        })
+        });
     }
-}
+};
 
 // Função responsável por buscar os detalhes de um beneficiário.
 // "async" significa que ela pode esperar operações demoradas,

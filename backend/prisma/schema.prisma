@@ -30,6 +30,7 @@ enum TipoBeneficio {
 }
 
 
+
 model Usuario {
   id            Int         @id @default(autoincrement())
   nome          String
@@ -43,6 +44,9 @@ model Usuario {
 
   instituicaoId Int?                @unique
   instituicao   InstituicaoParceira? @relation(fields: [instituicaoId], references: [id])
+
+  doacoes       Doacao[]
+
   
   @@map("usuarios")
 }
@@ -65,6 +69,7 @@ model InstituicaoParceira {
 
   usuario          Usuario?
   beneficiarios    Beneficiario[]
+  doacoes          Doacao[]
 
   @@map("instituicoes_parceiras")
 }
@@ -104,6 +109,45 @@ model Beneficiario {
   atualizadoEm           DateTime       @updatedAt
   deletedAt              DateTime?
 
+  doacoes                Doacao[]
+
   @@index([instituicaoId])
   @@map("beneficiarios")
+}
+
+model Doacao {
+  id              Int      @id @default(autoincrement())
+
+  codigo          String   @unique
+
+  beneficiarioId  Int
+  beneficiario    Beneficiario @relation(fields: [beneficiarioId], references: [id])
+
+  instituicaoId   Int
+  instituicao     InstituicaoParceira @relation(fields: [instituicaoId], references: [id])
+
+  usuarioId       Int
+  usuario         Usuario              @relation(fields: [usuarioId], references: [id])
+
+  tipo            TipoBeneficio
+
+  quantidade      Int
+
+  observacoes     String?
+
+  comprovante     Boolean @default(false)
+
+  dataDoacao      DateTime @default(now())
+
+  criadoEm        DateTime @default(now())
+  atualizadoEm    DateTime @updatedAt
+  deletedAt       DateTime?
+
+  @@index([beneficiarioId])
+  @@index([instituicaoId])
+  @@index([usuarioId])
+  @@index([dataDoacao])
+  @@index([instituicaoId, dataDoacao])
+
+  @@map("doacoes")
 }
