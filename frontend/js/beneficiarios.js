@@ -1,3 +1,110 @@
+import { buscarCEP } from "../utils/cep.js";
+
+import {
+    aplicarMascaraCPF,
+    aplicarMascaraCEP,
+    aplicarMascaraTelefone
+} from "../utils/masks.js";
+
+import {
+    listarBeneficiarios,
+    buscarBeneficiario,
+    cadastrarBeneficiarioAPI,
+    editarBeneficiarioAPI,
+    excluirBeneficiarioAPI,
+    alterarStatusBeneficiarioAPI
+} from "../api/beneficiariosApi.js";
+
+// =====================================================
+// BENEFICIÁRIOS
+// =====================================================
+
+console.log("beneficiarios.js carregado");
+
+// =====================================================
+// CONFIGURAÇÕES
+// =====================================================
+
+const API_URL = "http://localhost:3000";
+
+// =====================================================
+// ESTADO DA TELA
+// =====================================================
+
+let usuarioLogado = null;
+
+let beneficiarioEditando = null;
+
+// =====================================================
+// ELEMENTOS DA TELA
+// =====================================================
+
+const elementos = {
+
+    tabela: document.getElementById("tabelaBeneficiarios"),
+
+    modal: document.getElementById("modalBeneficiario"),
+
+    formulario: document.getElementById("formBeneficiario"),
+
+    tituloModal: document.getElementById("tituloModalBeneficiario"),
+
+    grupoInstituicao: document.getElementById("grupoInstituicao"),
+
+    selectInstituicao: document.getElementById("instituicaoId"),
+
+    btnNovo: document.getElementById("btnNovoBeneficiario"),
+
+    btnAtualizar: document.getElementById("btnAtualizarBeneficiarios"),
+
+};
+
+// =====================================================
+// CAMPOS DO FORMULÁRIO
+// =====================================================
+
+const campos = {
+
+    nomeCompleto: document.getElementById("nomeCompleto"),
+
+    cpf: document.getElementById("cpf"),
+
+    dataNascimento: document.getElementById("dataNascimento"),
+
+    cep: document.getElementById("cep"),
+
+    logradouro: document.getElementById("logradouro"),
+
+    numero: document.getElementById("numero"),
+
+    complemento: document.getElementById("complemento"),
+
+    regiao: document.getElementById("regiao"),
+
+    cidade: document.getElementById("cidade"),
+
+    uf: document.getElementById("uf"),
+
+    telefonePrincipal: document.getElementById("telefonePrincipal"),
+
+    telefoneSecundario: document.getElementById("telefoneSecundario"),
+
+    email: document.getElementById("email"),
+
+    tipoBeneficio: document.getElementById("tipoBeneficio"),
+
+    situacaoSocioeconomica: document.getElementById("situacaoSocioeconomica"),
+
+    observacoes: document.getElementById("observacoes")
+
+};
+
+
+
+
+
+
+
 console.log("beneficiarios.js carregado");
 
 const API_URL = "http://localhost:3000";
@@ -378,10 +485,10 @@ document
 
         beneficiarioEditando = null;
 
-        document.getElementById("tituloModalBeneficiario").textContent =
+        elementos.tituloModal.textContent =
             "Novo Beneficiário";
 
-        document.getElementById("formBeneficiario").reset();
+            elementos.formulario.reset();
 
         if (usuarioLogado.role === "ADMIN") {
 
@@ -417,52 +524,34 @@ document
 // Função para fechar o modal
 function fecharModal() {
 
-    document.getElementById("modalBeneficiario").style.display = "none";
+    elementos.modal.style.display = "none";
 
-    document.getElementById("formBeneficiario").reset();
+    elementos.formulario.reset();
 
 }
 
-// ======================================================
-// BUSCAR CEP
-// ======================================================
-
-async function buscarCEP(cep) {
-
-    // Remove tudo que não for número
-    cep = cep.replace(/\D/g, "");
-
-    if (cep.length !== 8) {
-        return;
-    }
+//Buscar CEP
+campos.cep.addEventListener("blur", async () => {
 
     try {
 
-        const resposta = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const endereco = await buscarCEP(campos.cep.value);
 
-        const endereco = await resposta.json();
-
-        if (endereco.erro) {
-
-            alert("CEP não encontrado.");
-
+        if (!endereco) {
             return;
-
         }
 
-        document.getElementById("logradouro").value = endereco.logradouro;
-        document.getElementById("cidade").value = endereco.localidade;
-        document.getElementById("uf").value = endereco.uf;
+        campos.logradouro.value = endereco.logradouro;
+        campos.cidade.value = endereco.localidade;
+        campos.uf.value = endereco.uf;
 
     } catch (erro) {
 
-        console.error("Erro ao consultar CEP:", erro);
-
-        alert("Não foi possível consultar o CEP.");
+        alert(erro.message);
 
     }
 
-}
+});
 
 //Chamar a função automaticamente
 document
@@ -472,62 +561,6 @@ document
         buscarCEP(event.target.value);
 
     });
-
-// ======================================================
-// MÁSCARAS DOS CAMPOS
-// ======================================================
-
-function aplicarMascaras() {
-
-    // CPF
-    document.getElementById("cpf").addEventListener("input", (e) => {
-
-        let valor = e.target.value.replace(/\D/g, "");
-
-        valor = valor.replace(/(\d{3})(\d)/, "$1.$2");
-        valor = valor.replace(/(\d{3})(\d)/, "$1.$2");
-        valor = valor.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-
-        e.target.value = valor;
-
-    });
-
-    // CEP
-    document.getElementById("cep").addEventListener("input", (e) => {
-
-        let valor = e.target.value.replace(/\D/g, "");
-
-        valor = valor.replace(/(\d{5})(\d)/, "$1-$2");
-
-        e.target.value = valor;
-
-    });
-
-    // Telefone Principal
-    document.getElementById("telefonePrincipal").addEventListener("input", (e) => {
-
-        let valor = e.target.value.replace(/\D/g, "");
-
-        valor = valor.replace(/^(\d{2})(\d)/g, "($1) $2");
-        valor = valor.replace(/(\d{5})(\d)/, "$1-$2");
-
-        e.target.value = valor;
-
-    });
-
-    // Telefone Secundário
-    document.getElementById("telefoneSecundario").addEventListener("input", (e) => {
-
-        let valor = e.target.value.replace(/\D/g, "");
-
-        valor = valor.replace(/^(\d{2})(\d)/g, "($1) $2");
-        valor = valor.replace(/(\d{5})(\d)/, "$1-$2");
-
-        e.target.value = valor;
-
-    });
-
-}
 
 document
     .getElementById("formBeneficiario")
@@ -542,38 +575,38 @@ async function cadastrarBeneficiario(event) {
 
     const dados = {
 
-        nomeCompleto: document.getElementById("nomeCompleto").value,
-
-        cpf: document.getElementById("cpf").value.replace(/\D/g, ""),
-
-        dataNascimento: document.getElementById("dataNascimento").value,
-
-        logradouro: document.getElementById("logradouro").value,
-
-        numero: document.getElementById("numero").value,
-
-        complemento: document.getElementById("complemento").value,
-
-        cep: document.getElementById("cep").value.replace(/\D/g, ""),
-
-        regiao: document.getElementById("regiao").value,
-
-        cidade: document.getElementById("cidade").value,
-
-        uf: document.getElementById("uf").value,
-
-        telefonePrincipal: document.getElementById("telefonePrincipal").value.replace(/\D/g, ""),
-
-        telefoneSecundario: document.getElementById("telefoneSecundario").value.replace(/\D/g, ""),
-
-        email: document.getElementById("email").value,
-
-        tipoBeneficio: document.getElementById("tipoBeneficio").value,
-
-        situacaoSocioeconomica: document.getElementById("situacaoSocioeconomica").value,
-
-        observacoes: document.getElementById("observacoes").value
-
+        nomeCompleto: campos.nomeCompleto.value,
+    
+        cpf: campos.cpf.value.replace(/\D/g, ""),
+    
+        dataNascimento: campos.dataNascimento.value,
+    
+        logradouro: campos.logradouro.value,
+    
+        numero: campos.numero.value,
+    
+        complemento: campos.complemento.value,
+    
+        cep: campos.cep.value.replace(/\D/g, ""),
+    
+        regiao: campos.regiao.value,
+    
+        cidade: campos.cidade.value,
+    
+        uf: campos.uf.value,
+    
+        telefonePrincipal: campos.telefonePrincipal.value.replace(/\D/g, ""),
+    
+        telefoneSecundario: campos.telefoneSecundario.value.replace(/\D/g, ""),
+    
+        email: campos.email.value,
+    
+        tipoBeneficio: campos.tipoBeneficio.value,
+    
+        situacaoSocioeconomica: campos.situacaoSocioeconomica.value,
+    
+        observacoes: campos.observacoes.value
+    
     };
 
     if (usuarioLogado.role === "ADMIN") {
@@ -628,7 +661,7 @@ async function cadastrarBeneficiario(event) {
 
         fecharModal();
 
-        document.getElementById("formBeneficiario").reset();
+        elementos.formulario.reset();
 
         beneficiarioEditando = null;
 
@@ -715,5 +748,8 @@ await carregarUsuarioLogado();
 
 carregarBeneficiarios();
 
-aplicarMascaras();
+aplicarMascaraCPF(campos.cpf);
+aplicarMascaraCEP(campos.cep);
+aplicarMascaraTelefone(campos.telefonePrincipal);
+aplicarMascaraTelefone(campos.telefoneSecundario);
 
