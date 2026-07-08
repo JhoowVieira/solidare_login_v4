@@ -326,9 +326,9 @@ async function cadastrarBeneficiario(event) {
 
         uf: document.getElementById("uf").value,
 
-        telefonePrincipal: document.getElementById("telefonePrincipal").value,
+        telefonePrincipal: document.getElementById("telefonePrincipal").value.replace(/\D/g, ""),
 
-        telefoneSecundario: document.getElementById("telefoneSecundario").value,
+        telefoneSecundario: document.getElementById("telefoneSecundario").value.replace(/\D/g, ""),
 
         email: document.getElementById("email").value,
 
@@ -339,6 +339,14 @@ async function cadastrarBeneficiario(event) {
         observacoes: document.getElementById("observacoes").value
 
     };
+
+    if (usuarioLogado.role === "ADMIN") {
+
+        dados.instituicaoId = Number(
+            document.getElementById("instituicaoId").value
+        );
+
+    }
 
     try {
 
