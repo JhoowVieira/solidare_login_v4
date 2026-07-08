@@ -117,26 +117,112 @@ async function editarBeneficiario(id) {
     try {
 
         const resposta = await fetch(`${API_URL}/beneficiarios/${id}`, {
-            method: "GET",
+
             headers: {
                 Authorization: `Bearer ${token}`
             }
+
         });
 
         const beneficiario = await resposta.json();
 
+        console.log("Beneficiário recebido:", beneficiario);
+
         if (!resposta.ok) {
+
             alert(beneficiario.error);
+
             return;
+
         }
 
-        console.log("Beneficiário encontrado:", beneficiario);
+        beneficiarioEditando = id;
+
+        document.getElementById("tituloModalBeneficiario").textContent =
+            "Editar Beneficiário";
+
+        // ============================
+        // Dados Pessoais
+        // ============================
+
+        document.getElementById("nomeCompleto").value = beneficiario.nomeCompleto;
+
+        document.getElementById("cpf").value = beneficiario.cpf;
+
+        document.getElementById("dataNascimento").value =
+            beneficiario.dataNascimento.substring(0, 10);
+
+        // ============================
+        // Endereço
+        // ============================
+
+        document.getElementById("cep").value = beneficiario.cep ?? "";
+
+        document.getElementById("logradouro").value = beneficiario.logradouro;
+
+        document.getElementById("numero").value = beneficiario.numero;
+
+        document.getElementById("complemento").value =
+            beneficiario.complemento ?? "";
+
+        document.getElementById("regiao").value = beneficiario.regiao;
+
+        document.getElementById("cidade").value = beneficiario.cidade;
+
+        document.getElementById("uf").value = beneficiario.uf;
+
+        // ============================
+        // Contato
+        // ============================
+
+        document.getElementById("telefonePrincipal").value =
+            beneficiario.telefonePrincipal;
+
+        document.getElementById("telefoneSecundario").value =
+            beneficiario.telefoneSecundario ?? "";
+
+        document.getElementById("email").value =
+            beneficiario.email ?? "";
+
+        // ============================
+        // Benefício
+        // ============================
+
+        document.getElementById("tipoBeneficio").value =
+            beneficiario.tipoBeneficio;
+
+        document.getElementById("situacaoSocioeconomica").value =
+            beneficiario.situacaoSocioeconomica ?? "";
+
+        document.getElementById("observacoes").value =
+            beneficiario.observacoes ?? "";
+
+        // ============================
+        // Instituição (ADMIN)
+        // ============================
+
+        if (usuarioLogado.role === "ADMIN") {
+
+            document.getElementById("grupoInstituicao").style.display = "flex";
+
+            await carregarInstituicoesSelect();
+
+            document.getElementById("instituicaoId").value =
+                beneficiario.instituicaoId;
+
+        } else {
+
+            document.getElementById("grupoInstituicao").style.display = "none";
+
+        }
+
+        document.getElementById("modalBeneficiario").style.display = "block";
 
     } catch (erro) {
 
         console.error(erro);
 
-        alert("Erro ao buscar beneficiário.");
+        alert("Erro ao carregar o beneficiário.");
 
     }
 
@@ -146,6 +232,13 @@ async function editarBeneficiario(id) {
 document
     .getElementById("btnNovoBeneficiario")
     .addEventListener("click", async () => {
+
+        beneficiarioEditando = null;
+
+        document.getElementById("tituloModalBeneficiario").textContent =
+            "Novo Beneficiário";
+
+        document.getElementById("formBeneficiario").reset();
 
         if (usuarioLogado.role === "ADMIN") {
 
