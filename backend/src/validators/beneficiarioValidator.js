@@ -78,5 +78,5 @@ export const criarBeneficiarioSchema = z.object({
     .optional(),
 
   ativo: z
-    .boolean()
+    .boolean().default(true)
 });

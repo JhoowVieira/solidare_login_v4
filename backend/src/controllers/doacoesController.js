@@ -44,6 +44,21 @@ const cadastrarDoacao = async (req, res) => {
     // código pula direto para o catch.
     const data = criarDoacaoSchema.parse(req.body);
 
+    const beneficiario = await prisma.beneficiario.findFirst({
+    where: {
+      id: data.beneficiarioId,
+      instituicaoId: req.user.instituicaoId,
+      deletedAt: null,
+    },
+  });
+
+  if (!beneficiario) {
+    return res.status(403).json({
+      error: "Este beneficiário não pertence à sua instituição.",
+    });
+  }
+
+
     // Pega a data/hora atual (new Date()) e calcula o primeiro dia do
     // mês corrente. Ex: se hoje é 08/07/2026, inicioMes = 01/07/2026.
     const inicioMes = startOfMonth(new Date());
@@ -292,6 +307,7 @@ const detalheDeDoacao = async (req, res) => {
         const doacao = await prisma.doacao.findFirst({
             where: {
                 id,
+                codigo,
                 instituicaoId: req.user.instituicaoId,
                 deletedAt: null
             }
