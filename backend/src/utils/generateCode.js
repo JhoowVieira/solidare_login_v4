@@ -12,5 +12,3 @@ export function gerarCodigoDoacao() {
 
     return `DOA-${data}-${aleatorio}`;
 }
-
-console.log(gerarCodigoDoacao());

@@ -8,6 +8,7 @@ import { connectDB, disconnectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import instituicoesRoutes from "./routes/instituicoesRoutes.js";
 import beneficariosRoutes from "./routes/beneficariosRoutes.js";
+import doacoesRoutes from "./routes/doacoesRoutes.js"
 
 // Carrega as variáveis de ambiente
 config();
@@ -35,6 +36,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/auth", authRoutes);
 app.use("/", instituicoesRoutes);
 app.use("/", beneficariosRoutes);
+app.use("/", doacoesRoutes)
 
 // Porta do servidor
 const PORT = process.env.PORT || 3000;
